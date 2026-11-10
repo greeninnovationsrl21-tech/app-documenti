@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Documenti Green Innovation</title>
+<meta name="theme-color" content="#0b7a45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GI Documenti">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="config.js"></script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: una colonna da usare con una mano, in casa del cliente; il contatore documenti resta sempre visibile. */
+:root {
+  --bg: #f1f5ef; --surface: #ffffff; --ink: #14231b; --muted: #55675b; --line: #d3ddd4;
+  --accent: #0b7a45; --accent-ink: #ffffff; --warn: #a64b05; --warn-bg: #fdf0dc;
+  --err: #b3261e; --ok-bg: #dff3e6;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1712; --surface: #18231c; --ink: #e9f1eb; --muted: #a0b2a6; --line: #2e3c33;
+  --accent: #3cc47f; --accent-ink: #07210f; --warn: #f2b45a; --warn-bg: #33270f;
+  --err: #ff8a80; --ok-bg: #15351f; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0f1712; --surface: #18231c; --ink: #e9f1eb; --muted: #a0b2a6; --line: #2e3c33;
+  --accent: #3cc47f; --accent-ink: #07210f; --warn: #f2b45a; --warn-bg: #33270f;
+  --err: #ff8a80; --ok-bg: #15351f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font: 400 17px/1.4 var(--body);
+  -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+h1, h2, h3, p { margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap {
+  max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 32px;
+}
+.wrap.con-barra { padding-bottom: 130px; }
+.demo {
+  background: var(--warn-bg); color: var(--warn); font-size: 15px; font-weight: 500; text-align: center;
+  padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.marchio { font: 700 15px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.titolo { font: 700 34px/1.05 var(--display); text-wrap: balance; }
+.sotto { color: var(--muted); }
+.sezione { display: flex; flex-direction: column; gap: 10px; }
+.sezione > h2 { font: 700 21px/1.1 var(--display); letter-spacing: .02em; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+  padding: 10px 16px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface);
+  font-weight: 600; text-align: center; position: relative;
+}
+.btn:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn.primario { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.avviso { background: var(--warn); border-color: var(--warn); color: var(--surface); }
+.btn.largo { width: 100%; min-height: 56px; font-size: 19px; }
+.btn.testo { border-color: transparent; background: none; color: var(--muted); min-height: 44px; }
+.btn.pericolo { color: var(--err); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.nascosto { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+.campo { display: flex; flex-direction: column; gap: 4px; }
+.campo > label, .etichetta { font-weight: 600; font-size: 15px; }
+input[type=text], input[type=tel], input[type=password], textarea {
+  width: 100%; min-height: 48px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 17px;
+}
+textarea { min-height: 72px; resize: vertical; }
+.errato input, input.errato { border-color: var(--err); }
+.msg-err { color: var(--err); font-size: 15px; font-weight: 500; }
+.dati { display: flex; flex-direction: column; gap: 14px; }
+.scelta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scelta button { min-height: 48px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface); font-weight: 600; }
+.scelta button[aria-pressed="true"] { background: var(--ok-bg); border-color: var(--accent); }
+.spunta { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.spunta input { width: 22px; height: 22px; accent-color: var(--accent); }
+
+.riga {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px; text-align: left;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px;
+}
+.riga > div { min-width: 0; flex: 1; }
+.riga b { display: block; overflow-wrap: anywhere; }
+.riga small { color: var(--muted); font-size: 15px; }
+.riga .pill { flex: none; font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; }
+.riga.da-recuperare .pill { color: var(--warn); }
+.vuoto { color: var(--muted); }
+
+.barra-top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); padding-block: 8px 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.barra-riga { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 8px; }
+.indietro { width: 44px; height: 44px; margin-left: -10px; border: 0; background: none; display: grid; place-items: center; flex: none; }
+.indietro svg { width: 24px; height: 24px; }
+.barra-nome { flex: 1; min-width: 0; font: 700 22px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conta { font: 700 24px/1 var(--display); font-variant-numeric: tabular-nums; flex: none; }
+.conta small { font-size: 16px; color: var(--muted); }
+.avanzamento { max-width: 560px; height: 6px; margin: 8px auto 0; border-radius: 3px; background: var(--line); overflow: hidden; }
+.avanzamento i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+
+.docs { display: flex; flex-direction: column; gap: 10px; }
+.doc { background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.doc.ok { border-color: var(--accent); }
+.doc-testa { display: flex; align-items: flex-start; gap: 10px; }
+.doc-testa > div { min-width: 0; flex: 1; }
+.doc-testa h3 { font-size: 18px; font-weight: 600; line-height: 1.25; }
+.doc-testa p { color: var(--muted); font-size: 15px; }
+.stato { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; margin-top: 1px; }
+.doc.ok .stato { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.stato svg { width: 16px; height: 16px; display: none; }
+.doc.ok .stato svg { display: block; }
+.obbl { color: var(--err); font-weight: 600; }
+.azioni { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pagine { display: flex; flex-wrap: wrap; gap: 8px; }
+.pagina { position: relative; width: 74px; height: 96px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); overflow: hidden; padding: 0; }
+.pagina img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pagina span { display: grid; place-items: center; height: 100%; font-weight: 700; color: var(--muted); }
+.togli {
+  position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; border-radius: 50%; padding: 0;
+  border: 2px solid var(--surface); background: var(--ink); color: var(--surface); font-size: 17px; line-height: 1;
+}
+.casella { position: relative; }
+
+.barra-giu {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.barra-giu > div { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.barra-giu p { font-size: 15px; color: var(--muted); text-align: center; }
+
+.velo { position: fixed; inset: 0; z-index: 20; background: rgba(8, 16, 11, .62); display: flex; align-items: flex-end; justify-content: center; }
+.foglio {
+  width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; background: var(--surface);
+  border-radius: 14px 14px 0 0; display: flex; flex-direction: column; gap: 14px;
+  padding-top: 18px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.foglio h2 { font: 700 26px/1.1 var(--display); }
+.motivo { display: flex; flex-direction: column; gap: 6px; }
+.rapidi { display: flex; flex-wrap: wrap; gap: 6px; }
+.rapidi button { min-height: 40px; padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--line); background: var(--bg); font-size: 15px; }
+.anteprima { position: fixed; inset: 0; z-index: 30; background: #000; display: grid; place-items: center; }
+.anteprima img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.anteprima button { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; }
+.attesa { background: var(--surface); padding: 24px; border-radius: 10px; margin: auto 16px; width: calc(100% - 32px); max-width: 360px; text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.ruota { width: 36px; height: 36px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--accent); animation: giro 1s linear infinite; }
+@keyframes giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ruota { animation-duration: 4s; } .avanzamento i { transition: none; } }
+
+.esito { padding: 14px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
+.esito.ok { background: var(--ok-bg); }
+.esito.warn { background: var(--warn-bg); }
+.albero { font-size: 15px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-wrap: anywhere; }
+.albero div { padding-left: 16px; }
+.albero div.cartella { padding-left: 0; font-weight: 600; }
+.avvisino {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(120px + env(safe-area-inset-bottom, 0px)); z-index: 40;
+  width: min(calc(100% - 32px), 500px); background: var(--ink); color: var(--bg); padding: 12px 14px; border-radius: 8px; font-weight: 500;
+}
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+<div id="livelli"></div>
+
+<script>
+'use strict';
+/* ---------- Configurazione ---------- */
+const CARTELLA_DOC = 'PDA e DOCUMENTI';
+const DOCS = [
+  { k: 'pda', nome: 'PDA firmata', file: 'PDA firmata', cartella: CARTELLA_DOC, aiuto: 'Tutte le pagine, firme comprese', bloccante: true },
+  { k: 'ci', nome: "Carta d'identità", file: 'Carta identita', cartella: CARTELLA_DOC, aiuto: 'Fronte e retro' },
+  { k: 'cf', nome: 'Codice fiscale', file: 'Codice fiscale', cartella: CARTELLA_DOC, aiuto: 'Tessera sanitaria, fronte e retro' },
+  { k: 'bolletta', nome: 'Bolletta luce', file: 'Bolletta', cartella: CARTELLA_DOC, aiuto: 'Tutte le pagine, si deve leggere il POD' },
+  { k: 'iban', nome: 'IBAN', file: 'IBAN', cartella: CARTELLA_DOC, aiuto: 'Scrivilo qui o fotografa il documento' },
+  { k: 'visura', nome: 'Visura catastale', file: 'Visura catastale', cartella: CARTELLA_DOC, aiuto: 'Dati catastali della casa' },
+  { k: 'busta', nome: 'Busta paga', file: 'Busta paga', cartella: CARTELLA_DOC, aiuto: 'Serve per il finanziamento', soloFinanziamento: true }
+];
+const CARTELLA_INST = 'INSTALLAZIONE';
+const DOCS_INST = [
+  { k: 'moduli', nome: 'Moduli in copertura', file: 'Moduli copertura', cartella: CARTELLA_INST, aiuto: 'Tutto il campo fotovoltaico sul tetto' },
+  { k: 'inverter', nome: 'Etichetta inverter', file: 'Etichetta inverter', cartella: CARTELLA_INST, aiuto: 'Si devono leggere modello e numero di serie' },
+  { k: 'batteria', nome: 'Etichetta batteria', file: 'Etichetta batteria', cartella: CARTELLA_INST, aiuto: 'Si devono leggere modello e numero di serie', soloBatteria: true },
+  { k: 'autotest', nome: 'Autotest', file: 'Autotest', cartella: CARTELLA_INST, aiuto: "Schermo dell'inverter o report dell'autotest" },
+  { k: 'insieme', nome: 'Inverter e batteria insieme', file: 'Inverter e batteria', cartella: CARTELLA_INST, aiuto: 'Una foto con tutti e due installati', soloBatteria: true }
+];
+const RUOLI = {
+  venditore: {
+    docs: DOCS, cartelle: [CARTELLA_DOC, CARTELLA_INST], motivi: ['Lo manda il cliente', 'Lo recupero io'], datiTxt: true,
+    nuovo: 'Nuovo contratto', recuperare: 'Documenti da recuperare', sezione: 'Documenti', torna: 'Torna ai contratti',
+    vuoto: 'Nessuna bozza. I contratti non ancora inviati restano qui.', uno: 'documento', tanti: 'documenti', pratica: 'il contratto'
+  },
+  installatore: {
+    docs: DOCS_INST, cartelle: [CARTELLA_INST], motivi: ['La mando dopo', 'Non si può fare'], almenoUno: true,
+    nuovo: 'Nuova installazione', recuperare: 'Foto da recuperare', sezione: 'Foto', torna: 'Torna alle installazioni',
+    vuoto: "Nessuna bozza. Le installazioni non ancora inviate restano qui.", uno: 'foto', tanti: 'foto', pratica: "l'installazione"
+  }
+};
+const ruoloDi = p => (p && p.ruolo) || 'venditore';
+const R = () => RUOLI[(S.sess && S.sess.ruolo) || 'venditore'] || RUOLI.venditore;
+const quante = n => n + ' ' + (n === 1 ? R().uno : R().tanti);
+const LIMITE_BYTE = 18 * 1024 * 1024;
+const LIVELLI_FOTO = [{ lato: 2000, q: .76 }, { lato: 1500, q: .62 }, { lato: 1150, q: .5 }];
+const MAX_PDF_CARICATO = 15 * 1024 * 1024;
+
+// Link dell'App web di Apps Script (quello che finisce con /exec). Serve solo alla versione su GitHub.
+const API_URL = String(window.API_URL || '').trim();
+const SU_GOOGLE = !!(window.google && google.script && google.script.run);
+const DEMO = !SU_GOOGLE && !/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(API_URL);
+
+const ICONE = {
+  spunta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3.2l1.5-2.5h6.6L16.8 8H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 19h14"/></svg>',
+  indietro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>'
+};
+
+/* ---------- Utilità ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nuovoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+const nomeCartella = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N} .'-]/gu, ' ').replace(/\s+/g, ' ').trim().toUpperCase().replace(/[. ]+$/, '');
+
+function avviso(testo) {
+  const vecchio = $('.avvisino'); if (vecchio) vecchio.remove();
+  const el = document.createElement('div');
+  el.className = 'avvisino'; el.setAttribute('role', 'status'); el.textContent = testo;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+function ricorda(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function richiama(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+
+/* ---------- Archivio sul telefono ---------- */
+const Archivio = {
+  db: null, mem: { pratiche: new Map(), foto: new Map() },
+  async apri() {
+    if (DEMO) return;
+    try {
+      this.db = await new Promise((ok, no) => {
+        const r = indexedDB.open('gi_contratti', 1);
+        r.onupgradeneeded = () => { r.result.createObjectStore('pratiche', { keyPath: 'id' }); r.result.createObjectStore('foto', { keyPath: 'id' }); };
+        r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+      });
+    } catch (e) { this.db = null; }
+  },
+  op(store, modo, fare) {
+    return new Promise((ok, no) => {
+      const t = this.db.transaction(store, modo);
+      const r = fare(t.objectStore(store));
+      t.oncomplete = () => ok(r.result); t.onerror = () => no(t.error); t.onabort = () => no(t.error);
+    });
+  },
+  async metti(store, v) {
+    if (!this.db) { this.mem[store].set(v.id, v); return; }
+    try {
+      let rec = v;
+      // In navigazione privata alcuni browser rifiutano i Blob: salvo i byte.
+      if (store === 'foto') { const { blob, ...resto } = v; rec = { ...resto, dati: await blob.arrayBuffer(), mime: blob.type }; }
+      await this.op(store, 'readwrite', s => s.put(rec));
+      this.mem[store].delete(v.id);
+    } catch (e) {
+      this.mem[store].set(v.id, v);
+      throw e;
+    }
+  },
+  async togli(store, id) {
+    this.mem[store].delete(id);
+    if (this.db) await this.op(store, 'readwrite', s => s.delete(id));
+  },
+  async tutti(store) {
+    const mem = [...this.mem[store].values()];
+    if (!this.db) return mem;
+    let righe = await this.op(store, 'readonly', s => s.getAll());
+    if (store === 'foto') righe = righe.map(({ dati, mime, ...r }) => dati ? { ...r, blob: new Blob([dati], { type: mime }) } : r);
+    return righe.concat(mem);
+  }
+};
+
+/* ---------- Stato ---------- */
+const S = { sess: null, pratiche: [], p: null, foto: [], urls: new Map(), errori: {}, schermo: 'login', esito: null };
+
+const richiesti = p => RUOLI[ruoloDi(p)].docs.filter(d => {
+  if (p.stato === 'pendente') return p.mancanti.some(m => m.k === d.k);
+  if (d.soloBatteria && p.batteria === 'no') return false;
+  return !d.soloFinanziamento || p.pagamento === 'finanziamento';
+});
+const fotoDi = k => S.foto.filter(f => f.docKey === k).sort((a, b) => a.ordine - b.ordine);
+const presente = (p, k, foto = S.foto) => foto.some(f => f.docKey === k) || (k === 'iban' && ibanValido(p.iban));
+
+function ibanValido(testo) {
+  const s = String(testo || '').replace(/\s+/g, '').toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s)) return false;
+  if (s.startsWith('IT') && s.length !== 27) return false;
+  const n = (s.slice(4) + s.slice(0, 4)).replace(/[A-Z]/g, c => c.charCodeAt(0) - 55);
+  let r = 0;
+  for (const c of n) r = (r * 10 + Number(c)) % 97;
+  return r === 1;
+}
+
+const nuovaPratica = () => ({
+  id: nuovoId(), ruolo: (S.sess && S.sess.ruolo) || 'venditore', batteria: 'si', stato: 'bozza', cliente: '', pagamento: '', stessoIntestatario: true,
+  intestatario: '', iban: '', note: '', mancanti: [], creata: Date.now(), aggiornata: Date.now()
+});
+const intestatarioDi = p => p.stessoIntestatario ? p.cliente : p.intestatario;
+const etichettaPagamento = p => ({ bonifico: 'Bonifico', finanziamento: 'Finanziamento' }[p.pagamento] || '');
+
+let timerSalva;
+function salvaPresto() {
+  clearTimeout(timerSalva);
+  timerSalva = setTimeout(salvaOra, 350);
+}
+async function salvaOra() {
+  clearTimeout(timerSalva);
+  if (!S.p) return;
+  S.p.aggiornata = Date.now();
+  try { await Archivio.metti('pratiche', S.p); } catch (e) { avviso('Non riesco a salvare la bozza. Controlla lo spazio sul telefono.'); }
+}
+
+/* ---------- Immagini ---------- */
+const comeDataUrl = blob => new Promise((ok, no) => {
+  const r = new FileReader();
+  r.onload = () => ok(r.result); r.onerror = () => no(r.error);
+  r.readAsDataURL(blob);
+});
+const apriImg = src => new Promise((ok, no) => {
+  const img = new Image();
+  img.onload = () => ok(img); img.onerror = () => no(new Error('formato non letto'));
+  img.src = src;
+});
+async function caricaImmagine(blob) {
+  const url = URL.createObjectURL(blob);
+  try { return await apriImg(url); }
+  catch (e) { return await apriImg(await comeDataUrl(blob)); } // alcune pagine bloccano gli indirizzi blob
+  finally { URL.revokeObjectURL(url); }
+}
+async function comprimi(blob, lato, q) {
+  const img = await caricaImmagine(blob);
+  const r = Math.min(1, lato / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * r));
+  c.height = Math.max(1, Math.round(img.naturalHeight * r));
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(img, 0, 0, c.width, c.height);
+  let esito = await new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
+  if (!esito) esito = await (await fetch(c.toDataURL('image/jpeg', q))).blob();
+  return { blob: esito, w: c.width, h: c.height };
+}
+
+/* ---------- PDF: una pagina A4 per foto ---------- */
+function creaPdf(foto) {
+  const enc = new TextEncoder();
+  const pezzi = []; const pos = []; let tot = 0;
+  const scrivi = x => { const b = typeof x === 'string' ? enc.encode(x) : x; pezzi.push(b); tot += b.length; };
+  const inizio = n => { pos[n] = tot; scrivi(n + ' 0 obj\n'); };
+  scrivi('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  const pagineRef = foto.map((_, i) => (3 + i * 3) + ' 0 R').join(' ');
+  inizio(1); scrivi('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  inizio(2); scrivi('<< /Type /Pages /Count ' + foto.length + ' /Kids [' + pagineRef + '] >>\nendobj\n');
+  foto.forEach((f, i) => {
+    const nPag = 3 + i * 3, nCont = nPag + 1, nImg = nPag + 2;
+    const orizz = f.w > f.h;
+    const W = orizz ? 841.89 : 595.28, H = orizz ? 595.28 : 841.89, m = 14;
+    const s = Math.min((W - 2 * m) / f.w, (H - 2 * m) / f.h);
+    const iw = f.w * s, ih = f.h * s, x = (W - iw) / 2, y = (H - ih) / 2;
+    const cont = 'q ' + iw.toFixed(2) + ' 0 0 ' + ih.toFixed(2) + ' ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' cm /Im0 Do Q\n';
+    inizio(nPag);
+    scrivi('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /XObject << /Im0 ' + nImg + ' 0 R >> >> /Contents ' + nCont + ' 0 R >>\nendobj\n');
+    inizio(nCont);
+    scrivi('<< /Length ' + cont.length + ' >>\nstream\n' + cont + 'endstream\nendobj\n');
+    inizio(nImg);
+    scrivi('<< /Type /XObject /Subtype /Image /Width ' + f.w + ' /Height ' + f.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + f.bytes.length + ' >>\nstream\n');
+    scrivi(f.bytes);
+    scrivi('\nendstream\nendobj\n');
+  });
+  const xref = tot, n = 3 + foto.length * 3;
+  let t = 'xref\n0 ' + n + '\n0000000000 65535 f \n';
+  for (let i = 1; i < n; i++) t += String(pos[i]).padStart(10, '0') + ' 00000 n \n';
+  t += 'trailer\n<< /Size ' + n + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n';
+  scrivi(t);
+  return unisci(pezzi, tot);
+}
+function unisci(pezzi, tot) {
+  const out = new Uint8Array(tot); let o = 0;
+  for (const p of pezzi) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+/* ---------- ZIP senza compressione: PDF e JPEG sono già compressi ---------- */
+const TAB_CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(b) { let c = -1; for (let i = 0; i < b.length; i++) c = TAB_CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; }
+function creaZip(voci) {
+  const enc = new TextEncoder(), pezzi = [], centrale = []; let off = 0, dimC = 0;
+  const d = new Date();
+  const ora = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const giorno = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const v of voci) {
+    const nome = enc.encode(v.nome), dati = v.dati || new Uint8Array(0), crc = crc32(dati);
+    const l = new DataView(new ArrayBuffer(30));
+    l.setUint32(0, 0x04034b50, true); l.setUint16(4, 20, true); l.setUint16(6, 0x0800, true); l.setUint16(8, 0, true);
+    l.setUint16(10, ora, true); l.setUint16(12, giorno, true); l.setUint32(14, crc, true);
+    l.setUint32(18, dati.length, true); l.setUint32(22, dati.length, true); l.setUint16(26, nome.length, true);
+    pezzi.push(new Uint8Array(l.buffer), nome, dati);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(12, ora, true); c.setUint16(14, giorno, true); c.setUint32(16, crc, true);
+    c.setUint32(20, dati.length, true); c.setUint32(24, dati.length, true); c.setUint16(28, nome.length, true);
+    if (v.nome.endsWith('/')) c.setUint32(38, 0x10, true);
+    c.setUint32(42, off, true);
+    centrale.push(new Uint8Array(c.buffer), nome);
+    off += 30 + nome.length + dati.length; dimC += 46 + nome.length;
+  }
+  const f = new DataView(new ArrayBuffer(22));
+  f.setUint32(0, 0x06054b50, true); f.setUint16(8, voci.length, true); f.setUint16(10, voci.length, true);
+  f.setUint32(12, dimC, true); f.setUint32(16, off, true);
+  const tutti = [...pezzi, ...centrale, new Uint8Array(f.buffer)];
+  return unisci(tutti, tutti.reduce((s, x) => s + x.length, 0));
+}
+function base64(b) {
+  let s = '';
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/* ---------- Server ---------- */
+function server(fn, ...arg) {
+  if (DEMO) {
+    return new Promise(ok => setTimeout(() => ok(fn === 'login' ? { ok: true, nome: 'Francesco' } : { ok: true }), 500));
+  }
+  if (!SU_GOOGLE) {
+    // credentials: 'omit' non manda gli account Google del browser: niente blocco con più account.
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 240000);
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify({ azione: fn, dati: arg[0] }), credentials: 'omit', redirect: 'follow', signal: ctrl.signal })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .finally(() => clearTimeout(t));
+  }
+  return new Promise((ok, no) => {
+    const t = setTimeout(() => no(new Error('tempo')), 240000);
+    google.script.run
+      .withSuccessHandler(r => { clearTimeout(t); ok(r); })
+      .withFailureHandler(e => { clearTimeout(t); no(e); })[fn](...arg);
+  });
+}
+
+/* ---------- Schermate ---------- */
+function vai(schermo) {
+  S.schermo = schermo;
+  render();
+  window.scrollTo(0, 0);
+}
+function render() {
+  const dem = DEMO ? '<div class="demo">Prova: qui puoi usare foto a caso, non parte nessuna mail.</div>' : '';
+  const v = { login: vLogin, home: vHome, contratto: vContratto, fatto: vFatto }[S.schermo];
+  $('#app').innerHTML = dem + v();
+  if (S.schermo === 'contratto') { renderDocs(); aggiornaStato(); }
+}
+
+function vLogin() {
+  return '<main class="wrap"><div class="sezione"><p class="marchio">Green Innovation</p>' +
+    '<h1 class="titolo">Documenti clienti</h1><p class="sotto">Fotografa i documenti e mandali all\'ufficio.</p></div>' +
+    '<form id="f-login" class="dati"><div class="campo" id="c-pin"><label for="pin">Il tuo PIN</label>' +
+    '<input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" required>' +
+    '<p class="msg-err" id="err-pin" role="alert"></p></div>' +
+    '<button class="btn primario largo" type="submit" id="b-entra">Entra</button></form></main>';
+}
+
+function vHome() {
+  const mie = S.pratiche.filter(p => ruoloDi(p) === (S.sess.ruolo || 'venditore'));
+  const bozze = mie.filter(p => p.stato === 'bozza').sort((a, b) => b.aggiornata - a.aggiornata);
+  const pend = mie.filter(p => p.stato === 'pendente').sort((a, b) => b.aggiornata - a.aggiornata);
+  const aviso = (!DEMO && !Archivio.db) ? '<div class="esito warn"><b>Bozze non salvate</b><span>Questo browser non conserva le bozze. Invia ' + R().pratica + ' prima di chiudere la pagina.</span></div>' : '';
+  const rB = bozze.map(p => {
+    const tot = richiesti(p).length;
+    const foto = S.tutteFoto.filter(f => f.praticaId === p.id);
+    const fatti = richiesti(p).filter(d => presente(p, d.k, foto)).length;
+    return '<button class="riga" data-apri="' + p.id + '"><div><b>' + esc(p.cliente || 'Cliente senza nome') + '</b><small>' + new Date(p.aggiornata).toLocaleDateString('it-IT') + '</small></div><span class="pill">' + fatti + '/' + tot + '</span></button>';
+  }).join('');
+  const rP = pend.map(p => '<button class="riga da-recuperare" data-apri="' + p.id + '"><div><b>' + esc(p.cliente) + '</b><small>' + esc(p.mancanti.map(m => m.nome).join(', ')) + '</small></div><span class="pill">Manca ' + p.mancanti.length + '</span></button>').join('');
+  return '<main class="wrap"><div class="sezione"><p class="marchio">Green Innovation</p><h1 class="titolo">Ciao ' + esc(S.sess.nome) + '</h1></div>' + aviso +
+    '<button class="btn primario largo" id="b-nuovo">' + R().nuovo + '</button>' +
+    (rP ? '<section class="sezione"><h2>' + R().recuperare + '</h2>' + rP + '</section>' : '') +
+    '<section class="sezione"><h2>Bozze</h2>' + (rB || '<p class="vuoto">' + R().vuoto + '</p>') + '</section>' +
+    '<button class="btn testo" id="b-esci">Esci</button></main>';
+}
+
+function vContratto() {
+  const p = S.p;
+  const pend = p.stato === 'pendente';
+  const testa = '<header class="barra-top"><div class="barra-riga"><button class="indietro" id="b-indietro" aria-label="Torna indietro">' + ICONE.indietro + '</button>' +
+    '<div class="barra-nome" id="t-nome">' + esc(p.cliente || R().nuovo) + '</div><div class="conta" id="t-conta"></div></div>' +
+    '<div class="avanzamento"><i id="t-barra"></i></div></header>';
+  const inst = ruoloDi(p) === 'installatore';
+  const dati = pend
+    ? '<div class="esito warn"><b>' + R().recuperare + '</b><span>Quando li hai, aggiungili qui e inviali: vanno ad aggiungersi alla pratica di ' + esc(p.cliente) + '.</span></div>'
+    : inst
+    ? '<section class="sezione"><h2>Cliente</h2><div class="dati">' +
+      campo('cliente', 'Cognome e nome o ragione sociale', p.cliente, 'text') +
+      '<div class="campo"><span class="etichetta">Batteria installata</span><div class="scelta">' +
+      '<button type="button" data-batt="si" aria-pressed="' + (p.batteria !== 'no') + '">Sì</button>' +
+      '<button type="button" data-batt="no" aria-pressed="' + (p.batteria === 'no') + '">No</button></div></div>' +
+      '<div class="campo"><label for="note">Note per l\'ufficio (facoltative)</label><textarea id="note" data-campo="note">' + esc(p.note) + '</textarea></div>' +
+      '</div></section>'
+    : '<section class="sezione"><h2>Dati del cliente</h2><div class="dati">' +
+      campo('cliente', 'Cognome e nome o ragione sociale', p.cliente, 'text') +
+      '<div class="campo" id="c-pagamento"><span class="etichetta">Pagamento</span><div class="scelta">' +
+      '<button type="button" data-pag="bonifico" aria-pressed="' + (p.pagamento === 'bonifico') + '">Bonifico</button>' +
+      '<button type="button" data-pag="finanziamento" aria-pressed="' + (p.pagamento === 'finanziamento') + '">Finanziamento</button></div><p class="msg-err" id="err-pagamento"></p></div>' +
+      '<div class="campo"><span class="etichetta">Intestatario detrazione</span><label class="spunta"><input type="checkbox" id="stessoIntestatario"' + (p.stessoIntestatario ? ' checked' : '') + '> Uguale al cliente</label>' +
+      '<div id="box-intestatario"' + (p.stessoIntestatario ? ' hidden' : '') + '>' + campo('intestatario', 'Nome intestatario', p.intestatario, 'text') + '</div></div>' +
+      '<div class="campo"><label for="note">Note per l\'ufficio (facoltative)</label><textarea id="note" data-campo="note">' + esc(p.note) + '</textarea></div>' +
+      '</div></section>';
+  const canc = pend ? '' : '<button class="btn testo pericolo" id="b-elimina">Elimina bozza</button>';
+  return testa + '<main class="wrap con-barra">' + dati + '<section class="sezione"><h2>' + R().sezione + '</h2><div class="docs" id="docs"></div></section>' + canc + '</main>' +
+    '<div class="barra-giu"><div><p id="g-testo"></p><button class="btn primario largo" id="b-invia">Invia all\'ufficio</button></div></div>';
+}
+function campo(id, etichetta, val, tipo) {
+  return '<div class="campo" id="c-' + id + '"><label for="' + id + '">' + esc(etichetta) + '</label><input id="' + id + '" data-campo="' + id + '" type="' + tipo + '" value="' + esc(val) + '" autocomplete="off"><p class="msg-err" id="err-' + id + '"></p></div>';
+}
+
+function renderDocs() {
+  const p = S.p, box = $('#docs'); if (!box) return;
+  box.innerHTML = richiesti(p).map(d => {
+    const foto = fotoDi(d.k);
+    const pag = foto.map(f => '<div class="casella"><button class="pagina" data-vedi="' + f.id + '" aria-label="Apri ' + esc(d.nome) + '">' +
+      (f.tipo === 'pdf' ? '<span>PDF</span>' : '<img alt="" data-foto="' + f.id + '" src="' + urlFoto(f) + '">') + '</button>' +
+      '<button class="togli" data-togli="' + f.id + '" aria-label="Togli questa pagina">×</button></div>').join('');
+    const iban = d.k === 'iban' ? '<div class="campo" id="c-iban"><label for="iban">IBAN del cliente</label><input id="iban" type="text" autocomplete="off" autocapitalize="characters" value="' + esc(p.iban) + '"><p class="msg-err" id="err-iban"></p></div>' : '';
+    const nota = d.bloccante ? ' <span class="obbl">Sempre obbligatoria</span>' : '';
+    return '<article class="doc" id="doc-' + d.k + '"><div class="doc-testa"><span class="stato">' + ICONE.spunta + '</span><div><h3>' + esc(d.nome) + '</h3><p>' + esc(d.aiuto) + nota + '</p></div></div>' + iban +
+      (pag ? '<div class="pagine">' + pag + '</div>' : '') +
+      '<div class="azioni"><label class="btn">' + ICONE.camera + 'Scatta foto<input class="nascosto" type="file" accept="image/*" capture="environment" data-doc="' + d.k + '" aria-label="Scatta foto ' + esc(d.nome) + '"></label>' +
+      '<label class="btn">' + ICONE.file + 'Carica file<input class="nascosto" type="file" accept="image/*,application/pdf" multiple data-doc="' + d.k + '" aria-label="Carica file ' + esc(d.nome) + '"></label></div></article>';
+  }).join('');
+}
+function urlFoto(f) {
+  if (!S.urls.has(f.id)) S.urls.set(f.id, URL.createObjectURL(f.blob));
+  return S.urls.get(f.id);
+}
+
+function aggiornaStato() {
+  const p = S.p; if (!p || S.schermo !== 'contratto') return;
+  const lista = richiesti(p);
+  const fatti = lista.filter(d => presente(p, d.k));
+  lista.forEach(d => { const el = $('#doc-' + d.k); if (el) el.classList.toggle('ok', presente(p, d.k)); });
+  $('#t-conta').innerHTML = fatti.length + '<small>/' + lista.length + '</small>';
+  $('#t-barra').style.width = (lista.length ? fatti.length / lista.length * 100 : 0) + '%';
+  $('#t-nome').textContent = p.cliente || R().nuovo;
+  const b = $('#b-invia'), t = $('#g-testo'), manca = lista.length - fatti.length;
+  if (p.stato === 'pendente') {
+    b.textContent = 'Invia all\'ufficio'; b.className = 'btn primario largo';
+    t.textContent = fatti.length ? (manca ? 'Resterà da recuperare: ' + quante(manca) : 'Pratica completa') : 'Aggiungi almeno ' + (R().uno === 'foto' ? 'una foto' : 'un documento');
+  } else if (manca) {
+    b.textContent = 'Invia con ' + manca + (manca === 1 ? ' mancante' : ' mancanti'); b.className = 'btn avviso largo';
+    t.textContent = 'Le bozze restano salvate su questo telefono';
+  } else {
+    b.textContent = 'Invia all\'ufficio'; b.className = 'btn primario largo';
+    t.textContent = 'Non manca niente';
+  }
+}
+
+function vFatto() {
+  const e = S.esito;
+  const alb = e.albero.map(r => '<div' + (r.cartella ? ' class="cartella"' : '') + '>' + esc(r.testo) + '</div>').join('');
+  const stato = e.mancanti.length
+    ? '<div class="esito warn"><b>Inviato, ' + (e.mancanti.length === 1 ? 'manca ' : 'mancano ') + quante(e.mancanti.length) + '</b><span>L\'ufficio riceve la mail con l\'elenco. Per completare vai in "' + R().recuperare + '".</span></div>'
+    : '<div class="esito ok"><b>Inviato all\'ufficio</b><span>Non manca niente.</span></div>';
+  const prova = DEMO ? '<p class="sotto">Nell\'app vera qui partirebbe la mail con questi file.</p>' : '';
+  return '<main class="wrap"><h1 class="titolo">' + esc(e.cliente) + '</h1>' + stato + prova +
+    '<div class="albero">' + alb + '</div><p class="sotto">Le foto sono state cancellate da questo telefono.</p>' +
+    '<button class="btn primario largo" id="b-home">' + R().torna + '</button></main>';
+}
+
+/* ---------- Azioni ---------- */
+async function caricaTutto() {
+  S.pratiche = await Archivio.tutti('pratiche');
+  S.tutteFoto = await Archivio.tutti('foto');
+  const ids = new Set(S.pratiche.map(p => p.id));
+  for (const f of S.tutteFoto) if (!ids.has(f.praticaId)) await Archivio.togli('foto', f.id);
+}
+async function apriPratica(id) {
+  await caricaTutto();
+  S.p = S.pratiche.find(p => p.id === id);
+  if (!S.p) { ricorda('gi_aperta', null); return vai('home'); }
+  S.foto = S.tutteFoto.filter(f => f.praticaId === id);
+  ricorda('gi_aperta', id);
+  vai('contratto');
+}
+async function nuovoContratto() {
+  S.p = nuovaPratica(); S.foto = [];
+  await Archivio.metti('pratiche', S.p);
+  ricorda('gi_aperta', S.p.id);
+  vai('contratto');
+  $('#cliente').focus();
+}
+async function esciDalContratto() {
+  const p = S.p;
+  const vuota = p.stato === 'bozza' && !S.foto.length && !p.cliente.trim() && !p.pagamento && !p.iban.trim() && !p.note.trim();
+  if (vuota) { clearTimeout(timerSalva); await Archivio.togli('pratiche', p.id); } else await salvaOra();
+  S.p = null; S.foto = [];
+  S.urls.forEach(u => URL.revokeObjectURL(u)); S.urls.clear();
+  ricorda('gi_aperta', null);
+  await caricaTutto();
+  vai('home');
+}
+async function aggiungiFile(k, files) {
+  let ordine = fotoDi(k).reduce((m, f) => Math.max(m, f.ordine), 0);
+  for (const file of files) {
+    const base = { id: nuovoId(), praticaId: S.p.id, docKey: k, ordine: ++ordine };
+    let rec;
+    try {
+      if (file.type === 'application/pdf') {
+        if (file.size > MAX_PDF_CARICATO) { avviso('Il PDF ' + file.name + ' è troppo grande (massimo 15 MB).'); continue; }
+        rec = { ...base, tipo: 'pdf', blob: file.slice(0, file.size, 'application/pdf') };
+      } else {
+        const c = await comprimi(file, LIVELLI_FOTO[0].lato, LIVELLI_FOTO[0].q);
+        rec = { ...base, tipo: 'jpg', blob: c.blob, w: c.w, h: c.h };
+      }
+    } catch (e) {
+      avviso('Non riesco a leggere ' + (file.name || 'la foto') + '. Rifai la foto o caricala in JPG o PDF. (' + (e && e.message || 'errore') + ', tipo ' + (file.type || 'sconosciuto') + ')');
+      continue;
+    }
+    S.foto.push(rec);
+    try { await Archivio.metti('foto', rec); }
+    catch (e) { avviso('Foto aggiunta, ma non salvata sul telefono: invia il contratto prima di chiudere la pagina.'); }
+  }
+  await salvaOra();
+  renderDocs(); aggiornaStato();
+}
+async function togliFoto(id) {
+  await Archivio.togli('foto', id);
+  S.foto = S.foto.filter(f => f.id !== id);
+  if (S.urls.has(id)) { URL.revokeObjectURL(S.urls.get(id)); S.urls.delete(id); }
+  renderDocs(); aggiornaStato();
+}
+function vediFoto(id) {
+  const f = S.foto.find(x => x.id === id); if (!f) return;
+  if (f.tipo === 'pdf') return avviso('PDF caricato: controllalo prima di aggiungerlo, qui non si apre.');
+  $('#livelli').innerHTML = '<div class="anteprima"><img alt="Pagina fotografata" data-foto="' + f.id + '" src="' + urlFoto(f) + '"><button class="btn" data-chiudi>Chiudi</button></div>';
+}
+const chiudiLivello = () => { $('#livelli').innerHTML = ''; };
+
+function controllaDati() {
+  const p = S.p, err = {};
+  if (p.stato === 'pendente') return err;
+  if (nomeCartella(p.cliente).length < 3) err.cliente = 'Scrivi cognome e nome del cliente.';
+  if (ruoloDi(p) === 'installatore') return err;
+  if (!p.pagamento) err.pagamento = 'Scegli il tipo di pagamento.';
+  if (!p.stessoIntestatario && !p.intestatario.trim()) err.intestatario = 'Scrivi chi è l\'intestatario della detrazione.';
+  return err;
+}
+function mostraErrori(err) {
+  ['cliente', 'pagamento', 'intestatario'].forEach(k => {
+    const el = $('#err-' + k); if (el) el.textContent = err[k] || '';
+    const c = $('#c-' + k); if (c) c.classList.toggle('errato', !!err[k]);
+  });
+}
+function chiediInvio() {
+  const p = S.p, err = controllaDati();
+  mostraErrori(err);
+  const primo = Object.keys(err)[0];
+  if (primo) { $('#c-' + primo).scrollIntoView({ block: 'center' }); return avviso(err[primo]); }
+  if (p.iban.trim() && !ibanValido(p.iban) && !fotoDi('iban').length && richiesti(p).some(d => d.k === 'iban')) {
+    $('#err-iban').textContent = 'IBAN non corretto: controlla i caratteri.';
+    $('#c-iban').scrollIntoView({ block: 'center' });
+    return avviso('IBAN non corretto: controlla i caratteri.');
+  }
+  const lista = richiesti(p);
+  const mancano = lista.filter(d => !presente(p, d.k));
+  const blocco = mancano.find(d => d.bloccante);
+  if (blocco) { $('#doc-' + blocco.k).scrollIntoView({ block: 'center' }); return avviso('Senza ' + blocco.nome + ' non puoi inviare il contratto.'); }
+  const nessuno = 'Aggiungi almeno ' + (R().uno === 'foto' ? 'una foto.' : 'un documento.');
+  if (p.stato === 'pendente') {
+    if (mancano.length === lista.length) return avviso(nessuno);
+    return invia(p.mancanti.filter(m => mancano.some(d => d.k === m.k)));
+  }
+  if (R().almenoUno && mancano.length === lista.length) return avviso(nessuno);
+  if (!mancano.length) return invia([]);
+  const motivi = {};
+  (p.mancanti || []).forEach(m => { motivi[m.k] = m.motivo; });
+  $('#livelli').innerHTML = '<div class="velo"><div class="foglio" role="dialog" aria-modal="true" aria-labelledby="t-mancano"><h2 id="t-mancano">' + (mancano.length === 1 ? 'Manca ' : 'Mancano ') + quante(mancano.length) + '</h2>' +
+    '<p class="sotto">Scrivi il motivo: arriva all\'ufficio insieme alla mail.</p>' +
+    mancano.map(d => '<div class="motivo" data-k="' + d.k + '"><label for="m-' + d.k + '"><b>' + esc(d.nome) + '</b></label><input type="text" id="m-' + d.k + '" value="' + esc(motivi[d.k] || '') + '" autocomplete="off"><div class="rapidi">' +
+      R().motivi.map(t => '<button type="button" data-rapido="' + esc(t) + '">' + esc(t) + '</button>').join('') + '</div></div>').join('') +
+    '<p class="msg-err" id="err-motivi" role="alert"></p><button class="btn avviso largo" id="b-conferma">Invia lo stesso</button><button class="btn testo" data-chiudi>Torno a fare le foto</button></div></div>';
+}
+function confermaMancanti() {
+  const voci = [...document.querySelectorAll('.motivo')].map(el => {
+    const k = el.dataset.k;
+    return { k, nome: R().docs.find(d => d.k === k).nome, motivo: $('input', el).value.trim() };
+  });
+  if (voci.some(v => !v.motivo)) { $('#err-motivi').textContent = 'Scrivi il motivo per ogni documento.'; return; }
+  S.p.mancanti = voci;
+  invia(voci);
+}
+
+function mostraAttesa(testo) {
+  $('#livelli').innerHTML = '<div class="velo" style="align-items:center"><div class="attesa" role="status"><div class="ruota"></div><b id="a-testo">' + esc(testo) + '</b><span class="sotto">Non chiudere questa pagina.</span></div></div>';
+}
+const testoAttesa = t => { const el = $('#a-testo'); if (el) el.textContent = t; };
+
+async function fileDelDoc(d, cliente, livello) {
+  const foto = fotoDi(d.k), out = [];
+  const img = foto.filter(f => f.tipo === 'jpg');
+  const pdf = foto.filter(f => f.tipo === 'pdf');
+  const nome = n => d.file + ' - ' + cliente + (n ? ' (' + (n + 1) + ')' : '') + '.pdf';
+  let n = 0;
+  if (img.length) {
+    const pagine = [];
+    for (const f of img) {
+      if (livello === 0) pagine.push({ bytes: new Uint8Array(await f.blob.arrayBuffer()), w: f.w, h: f.h });
+      else {
+        const c = await comprimi(f.blob, LIVELLI_FOTO[livello].lato, LIVELLI_FOTO[livello].q);
+        pagine.push({ bytes: new Uint8Array(await c.blob.arrayBuffer()), w: c.w, h: c.h });
+      }
+    }
+    out.push({ nome: nome(n++), cartella: d.cartella, bytes: creaPdf(pagine), doc: d.nome });
+  }
+  for (const f of pdf) out.push({ nome: nome(n++), cartella: d.cartella, bytes: new Uint8Array(await f.blob.arrayBuffer()), doc: d.nome });
+  return out;
+}
+function testoDati(p, mancanti) {
+  const r = [
+    'Cliente: ' + p.cliente, 'Pagamento: ' + etichettaPagamento(p),
+    'Intestatario detrazione: ' + intestatarioDi(p), 'IBAN: ' + (p.iban.replace(/\s+/g, '').toUpperCase() || '-'),
+    'Venditore: ' + S.sess.nome, 'Data: ' + new Date().toLocaleDateString('it-IT')
+  ];
+  if (p.note.trim()) r.push('Note: ' + p.note.trim());
+  if (mancanti.length) r.push('', 'Documenti mancanti:', ...mancanti.map(m => '- ' + m.nome + ': ' + m.motivo));
+  return new TextEncoder().encode(r.join('\r\n') + '\r\n');
+}
+async function idInvio(p, mancanti) {
+  const firma = JSON.stringify([p.id, p.stato, p.cliente, p.batteria, p.pagamento, intestatarioDi(p), p.iban, p.note, mancanti, S.foto.map(f => f.id).sort()]);
+  return p.id + '-' + crc32(new TextEncoder().encode(firma)).toString(36);
+}
+
+async function invia(mancanti) {
+  const p = S.p;
+  await salvaOra();
+  mostraAttesa('Preparo i PDF…');
+  try {
+    const cartella = nomeCartella(p.cliente);
+    const docInvio = richiesti(p).filter(d => fotoDi(d.k).length);
+    const integrazione = p.stato === 'pendente';
+    const ibanScritto = ibanValido(p.iban) ? p.iban.replace(/\s+/g, '').toUpperCase() : '';
+    const nomi = richiesti(p).filter(d => presente(p, d.k)).map(d => d.nome);
+    let allegati = [], albero = [];
+
+    for (let livello = 0; livello < LIVELLI_FOTO.length; livello++) {
+      let files = [];
+      for (const d of docInvio) files = files.concat(await fileDelDoc(d, cartella, livello));
+      if (integrazione) {
+        const peso = files.reduce((s, f) => s + f.bytes.length, 0);
+        allegati = files.map(f => ({ nome: f.nome, mime: 'application/pdf', dati: f.bytes }));
+        albero = [{ testo: 'Allegati alla mail', cartella: true }, ...files.map(f => ({ testo: f.nome }))];
+        if (peso <= LIMITE_BYTE) break;
+      } else {
+        const cartelle = R().cartelle, conTxt = R().datiTxt;
+        const voci = [{ nome: cartella + '/' }, ...cartelle.map(c => ({ nome: cartella + '/' + c + '/' }))];
+        files.forEach(f => voci.push({ nome: cartella + '/' + f.cartella + '/' + f.nome, dati: f.bytes }));
+        if (conTxt) voci.push({ nome: cartella + '/' + CARTELLA_DOC + '/Dati contratto.txt', dati: testoDati(p, mancanti) });
+        const zip = creaZip(voci);
+        allegati = [{ nome: cartella + '.zip', mime: 'application/zip', dati: zip }];
+        albero = [];
+        cartelle.forEach(c => {
+          albero.push({ testo: cartella + ' / ' + c, cartella: true });
+          files.filter(f => f.cartella === c).forEach(f => albero.push({ testo: f.nome }));
+          if (conTxt && c === CARTELLA_DOC) albero.push({ testo: 'Dati contratto.txt' });
+        });
+        if (zip.length <= LIMITE_BYTE) break;
+      }
+      testoAttesa('Riduco il peso delle foto…');
+    }
+    const pesoFinale = allegati.reduce((s, a) => s + a.dati.length, 0);
+    if (pesoFinale > LIMITE_BYTE) {
+      chiudiLivello();
+      return avviso('Troppi file: pesano ' + Math.ceil(pesoFinale / 1048576) + ' MB, il massimo è 18. Togli qualche pagina e riprova.');
+    }
+
+    testoAttesa('Invio all\'ufficio…');
+    const r = await server('inviaPratica', {
+      pin: S.sess.pin, idInvio: await idInvio(p, mancanti),
+      tipo: integrazione ? 'integrazione' : 'contratto',
+      cliente: p.cliente.trim(), pagamento: etichettaPagamento(p),
+      intestatario: intestatarioDi(p).trim(), iban: ibanScritto, note: p.note.trim(),
+      presenti: nomi,
+      mancanti: mancanti.map(m => ({ nome: m.nome, motivo: m.motivo })),
+      allegati: allegati.map(a => ({ nome: a.nome, mime: a.mime, base64: base64(a.dati) }))
+    });
+    if (!r || !r.ok) throw Object.assign(new Error((r && r.msg) || 'errore'), { daServer: !!r, pinErrato: r && r.pinErrato });
+
+    for (const f of S.foto) await Archivio.togli('foto', f.id);
+    S.foto = [];
+    S.urls.forEach(u => URL.revokeObjectURL(u)); S.urls.clear();
+    if (mancanti.length) {
+      p.stato = 'pendente'; p.mancanti = mancanti;
+      await Archivio.metti('pratiche', p);
+    } else {
+      await Archivio.togli('pratiche', p.id);
+    }
+    S.esito = { cliente: p.cliente.trim().toUpperCase(), mancanti, albero };
+    S.p = null; ricorda('gi_aperta', null);
+    chiudiLivello();
+    await caricaTutto();
+    vai('fatto');
+  } catch (e) {
+    chiudiLivello();
+    if (e && e.pinErrato) { ricorda('gi_sess', null); }
+    const msg = e && e.pinErrato ? e.message + ' Riapri l\'app per inserire di nuovo il PIN.' : e && e.daServer ? e.message : 'Invio non riuscito. Controlla la connessione e riprova: il contratto è salvato.';
+    $('#livelli').innerHTML = '<div class="velo"><div class="foglio" role="alertdialog" aria-modal="true" aria-labelledby="t-err"><h2 id="t-err">Non inviato</h2><p>' + esc(msg) + '</p><button class="btn primario largo" data-chiudi>Ho capito</button></div></div>';
+  }
+}
+
+function chiediElimina() {
+  $('#livelli').innerHTML = '<div class="velo"><div class="foglio" role="dialog" aria-modal="true" aria-labelledby="t-del"><h2 id="t-del">Eliminare la bozza?</h2><p class="sotto">Dati e foto spariscono da questo telefono e non si possono recuperare.</p><button class="btn largo pericolo" id="b-elimina-ok">Elimina bozza</button><button class="btn testo" data-chiudi>Annulla</button></div></div>';
+}
+async function eliminaBozza() {
+  for (const f of S.foto) await Archivio.togli('foto', f.id);
+  await Archivio.togli('pratiche', S.p.id);
+  clearTimeout(timerSalva);
+  S.p = null; S.foto = []; ricorda('gi_aperta', null);
+  chiudiLivello(); await caricaTutto(); vai('home');
+}
+
+/* ---------- Eventi ---------- */
+document.addEventListener('error', async e => {
+  const img = e.target;
+  if (!img.dataset || !img.dataset.foto || img.src.startsWith('data:')) return;
+  const f = S.foto.find(x => x.id === img.dataset.foto);
+  if (f) img.src = await comeDataUrl(f.blob);
+}, true);
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,[data-chiudi]'); if (!t) return;
+  if (t.hasAttribute('data-chiudi')) return chiudiLivello();
+  if (t.dataset.apri) return apriPratica(t.dataset.apri);
+  if (t.dataset.togli) return togliFoto(t.dataset.togli);
+  if (t.dataset.vedi) return vediFoto(t.dataset.vedi);
+  if (t.dataset.rapido) { $('input', t.closest('.motivo')).value = t.dataset.rapido; return; }
+  if (t.dataset.batt) {
+    S.p.batteria = t.dataset.batt; salvaPresto();
+    document.querySelectorAll('[data-batt]').forEach(b => b.setAttribute('aria-pressed', b === t));
+    renderDocs(); aggiornaStato(); return;
+  }
+  if (t.dataset.pag) {
+    S.p.pagamento = t.dataset.pag; salvaPresto();
+    document.querySelectorAll('[data-pag]').forEach(b => b.setAttribute('aria-pressed', b === t));
+    mostraErrori(controllaDatiVisibili());
+    renderDocs(); aggiornaStato(); return;
+  }
+  const az = { 'b-nuovo': nuovoContratto, 'b-esci': esci, 'b-indietro': esciDalContratto, 'b-invia': chiediInvio, 'b-conferma': confermaMancanti, 'b-elimina': chiediElimina, 'b-elimina-ok': eliminaBozza, 'b-home': () => vai('home') }[t.id];
+  if (az) az();
+});
+const controllaDatiVisibili = () => { const e = controllaDati(); ['cliente', 'intestatario'].forEach(k => { if (!$('#err-' + k) || !$('#err-' + k).textContent) delete e[k]; }); return e; };
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.campo) { S.p[t.dataset.campo] = t.value; salvaPresto(); aggiornaStato(); }
+  if (t.id === 'iban') { S.p.iban = t.value; $('#err-iban').textContent = ''; salvaPresto(); aggiornaStato(); }
+});
+document.addEventListener('blur', e => {
+  if (e.target.id === 'iban' && S.p && S.p.iban.trim() && !ibanValido(S.p.iban)) $('#err-iban').textContent = 'IBAN non corretto: controlla i caratteri.';
+}, true);
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'stessoIntestatario') {
+    S.p.stessoIntestatario = t.checked; $('#box-intestatario').hidden = t.checked; salvaPresto();
+  }
+  if (t.type === 'file' && t.dataset.doc) { aggiungiFile(t.dataset.doc, [...t.files]); t.value = ''; }
+});
+document.addEventListener('submit', async e => {
+  e.preventDefault();
+  const pin = $('#pin').value.trim(), b = $('#b-entra'), err = $('#err-pin');
+  err.textContent = ''; b.disabled = true; b.textContent = 'Controllo…';
+  try {
+    const r = await server('login', pin);
+    if (r.ok) { S.sess = { pin, nome: r.nome, ruolo: r.ruolo || 'venditore' }; ricorda('gi_sess', S.sess); await caricaTutto(); return vai('home'); }
+    err.textContent = r.msg;
+  } catch (x) { err.textContent = SU_GOOGLE ? 'Accesso non riuscito. Se sei connesso a internet, apri il link con Safari o con un browser senza account Google collegati.' : 'Accesso non riuscito. Controlla la connessione e riprova.'; }
+  b.disabled = false; b.textContent = 'Entra';
+});
+async function esci() { ricorda('gi_sess', null); ricorda('gi_aperta', null); S.sess = null; vai('login'); }
+
+/* ---------- Dati di esempio per la prova ---------- */
+async function esempio() {
+  const foglio = async testo => {
+    const c = document.createElement('canvas'); c.width = 600; c.height = 800;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, 600, 800); g.fillStyle = '#0b7a45'; g.fillRect(0, 0, 600, 70);
+    g.fillStyle = '#fff'; g.font = 'bold 34px sans-serif'; g.fillText(testo, 24, 48);
+    g.fillStyle = '#c9d3cb'; for (let y = 120; y < 740; y += 40) g.fillRect(24, y, 552 - (y % 120), 12);
+    const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .7));
+    return { blob, w: 600, h: 800 };
+  };
+  const bozza = { ...nuovaPratica(), cliente: 'Esempio Mario', pagamento: 'finanziamento', iban: 'IT60 X054 2811 1010 0000 0123 456' };
+  const pend = { ...nuovaPratica(), stato: 'pendente', cliente: 'Prova Giulia', pagamento: 'bonifico', mancanti: [{ k: 'visura', nome: 'Visura catastale', motivo: 'Lo manda il cliente' }] };
+  await Archivio.metti('pratiche', bozza); await Archivio.metti('pratiche', pend);
+  let n = 0;
+  for (const [k, t] of [['pda', 'PDA PROVA'], ['pda', 'PDA PROVA 2'], ['ci', 'DOCUMENTO PROVA']]) {
+    await Archivio.metti('foto', { id: nuovoId(), praticaId: bozza.id, docKey: k, ordine: ++n, tipo: 'jpg', ...(await foglio(t)) });
+  }
+}
+
+/* ---------- Avvio ---------- */
+(async function avvio() {
+  await Archivio.apri();
+  if (DEMO) { await esempio(); S.sess = { pin: '000000', nome: 'Francesco' }; await caricaTutto(); return vai('home'); }
+  S.sess = richiama('gi_sess');
+  if (!S.sess) return vai('login');
+  const aperta = richiama('gi_aperta');
+  if (aperta) return apriPratica(aperta);
+  await caricaTutto();
+  vai('home');
+})();
+</script>
+
+</body>
+</html>
